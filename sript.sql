@@ -1,95 +1,33 @@
--- -- Заполнение таблицы users
--- INSERT INTO users (nickname) VALUES
--- ('Player1'),
--- ('Player2'),
--- ('Player3'),
--- ('Player4'),
--- ('Player5'),
--- ('Player6'),
--- ('Player7'),
--- ('Player8');
+--Запрос 1: Топ-5 пользователей по очкам за слово
 
--- -- Заполнение таблицы statistics
--- INSERT INTO statistics (user_id, game_count, win_count, word_count, points_record, points_word_record) VALUES
--- (1, 10, 5, 50, 100, 20),
--- (2, 8, 4, 40, 80, 15),
--- (3, 15, 10, 60, 150, 30),
--- (4, 15, 6, 20, 51, 10),
--- (5, 6, 5, 54, 140, 23),
--- (6, 9, 3, 42, 60, 15),
--- (7, 15, 10, 69, 158, 34),
--- (8, 10, 2, 20, 50, 12);
+SELECT user_id, points_word_record FROM statistics
+ORDER BY points_word_record DESC LIMIT 5;
 
--- -- Заполнение таблицы states
--- INSERT INTO states (user_hand, is_active) VALUES
--- ('{"letters": ["А", "Б", "В", "Г", "Д", "Е", "Ж"]}', TRUE),
--- ('{"letters": ["А", "Б", "В", "Г", "Д", "Е", "Ж"]}', TRUE),
--- ('{"letters": ["А", "Б", "В", "Г", "Д", "Е", "Ж"]}', TRUE),
--- ('{"letters": ["А", "Б", "В", "Г", "Д", "Е", "Ж"]}', TRUE),
--- ('{"letters": ["А", "Б", "В", "Г", "Д", "Е", "Ж"]}', TRUE),
--- ('{"letters": ["А", "Б", "В", "Г", "Д", "Е", "Ж"]}', TRUE),
--- ('{"letters": ["А", "Б", "В", "Г", "Д", "Е", "Ж"]}', TRUE),
--- ('{"letters": ["А", "Б", "В", "Г", "Д", "Е", "Ж"]}', TRUE),
+--Запрос 2: Игра публичная и еще не началась
 
--- -- Заполнение таблицы lobbies
--- INSERT INTO lobbies (game_status, privacy, private_key, field) VALUES
--- ('in_progress', 'public', NULL, '{"grid": [[0,0],[0,0],[0,0]]}'),
--- ('in_progress', 'private', 'secret123', '{"grid": [[1,1],[1,0],[0,0]]}'),
--- ('finished', 'public', NULL, '{"grid": [[1,0],[0,1],[1,1]]}');
+SELECT * FROM lobbies
+WHERE privacy = 'public' AND game_status = 'waiting';
 
--- -- Заполнение таблицы words
--- INSERT INTO words (word, meaning) VALUES
--- ('яблоко', 'Фрукт, который может быть красным или зеленым.'),
--- ('банан', 'Длинный желтый фрукт.'),
--- ('вишня', 'Маленький круглый фрукт, который бывает красным или черным.'),
--- ('финик', 'Сладкий фрукт с пальмы финиковой.'),
--- ('груша', 'Сладкий фрукт с характерной формой, обычно зеленого или желтого цвета.'),
--- ('апельсин', 'Цитрусовый фрукт с ярко-оранжевой кожурой и сочной мякотью.'),
--- ('киви', 'Маленький коричневый фрукт с зеленой мякотью и черными семенами.'),
--- ('персик', 'Сладкий фрукт с мягкой кожурой и сочной мякотью, обычно оранжевого цвета.'),
--- ('слива', 'Фрукт с гладкой кожурой, который может быть сладким или кислым.'),
--- ('мандарин', 'Маленький цитрусовый фрукт с тонкой кожурой и сладкой мякотью.');
+--Запрос 3: Вывод пользователей, которые сыграли больше 20 игр и процент побед которых выше 90
+SELECT users.nickname, statistics.game_count, statistics.win_count,
+       (statistics.win_count::FLOAT / statistics.game_count) * 100 AS win_percentage
+FROM users
+JOIN statistics ON users.id = statistics.user_id
+WHERE statistics.game_count > 20
+  AND (statistics.win_count::FLOAT / statistics.game_count) * 100 > 90;
 
--- -- Заполнение таблицы users_lobbies_statistics
--- INSERT INTO users_lobbies_statistics (points_number, is_winner, words_count) VALUES
--- (10, NULL, 5),
--- (5, NULL, 3),
--- (15, NULL, 7),
--- (2, NULL, 1),
--- (10, NULL, 5),
--- (5, NULL, 3),
--- (15, NULL, 7),
--- (2, NULL, 1),
--- (100, TRUE, 5),
--- (5, FALSE, 3),
--- (15, FALSE, 7),
--- (2, FALSE, 1),
+--Запрос 4: Вывод лобби "в ожидании", в которых 3/4 игроков уже присоединились
 
--- -- Заполнение таблицы user_lobbies
--- INSERT INTO user_lobbies (user_id, lobby_id, state_id, user_lobby_statistic_id, is_creator, turn_number) VALUES
--- (1, 1, 1, 1, TRUE, 1),
--- (2, 1, 2, 2, FALSE, 2),
--- (3, 1, 3 , 3 , TRUE , 3),
--- (4 ,1 ,4 ,3 ,FALSE , 4),
--- (5, 2, 5, 1, TRUE, 1),
--- (6, 2, 6, 2, FALSE, 2),
--- (7, 2, 7 , 3 , TRUE , 3),
--- (8 ,2 ,8 ,3 ,FALSE ,4),
--- (1, 3, 9, 1, TRUE, 1),
--- (4, 3, 10, 2, FALSE, 2),
--- (6, 3, 11, 3 , TRUE , 3),
--- (8 ,3 , 12, 3 ,FALSE ,4),
+SELECT lobbies.id, lobbies.game_status, lobbies.privacy, COUNT(user_lobbies.user_id) AS player_count
+FROM lobbies
+JOIN user_lobbies ON lobbies.id = user_lobbies.lobby_id
+GROUP BY lobbies.id
+HAVING COUNT(user_lobbies.user_id) = 3;
 
+--Запрос 5: Вывод пользователей, которые достигли рекорда (пример - 1000) очков за все игры
 
--- -- Заполнение таблицы words_lobbies
--- INSERT INTO words_lobbies (word_id , lobby_id ) VALUES
--- (1 ,1 ),
--- (2 ,1 ),
--- (3 ,2 ),
--- (4 ,3 );
--- (5 ,1 ),
--- (6 ,1 ),
--- (7 ,2 ),
--- (8 ,3 );
--- (9 ,1 ),
--- (10 ,2 ),
+SELECT users.nickname, statistics.points_word_record
+FROM users
+JOIN statistics ON users.id = statistics.user_id
+WHERE statistics.points_word_record >= 1000;
+
