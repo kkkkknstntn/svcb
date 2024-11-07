@@ -1,0 +1,23 @@
+version: '3.9'
+
+x-pg-db-env:
+  environment: &env_pg_db
+    POSTGRES_USER: postgres
+    POSTGRES_PASSWORD: postgres
+    POSTGRES_DB: svcb-db
+
+services:
+  postgres:
+    container_name: postgres-svcb
+    image: postgres
+    ports:
+      - 5440:5432
+    environment:
+      <<: *env_pg_db
+    volumes:
+        - ./:/docker-entrypoint-initdb.d
+        - pg_svcb:/var/lib/postgresql/data
+
+
+volumes:
+  pg_svcb:
